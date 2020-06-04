@@ -60,16 +60,13 @@ struct Push
 
         const float_X deltaT = DELTA_T;
 
-        const MomType mom_minus = mom + 0.5_X * charge * eField * deltaT;
 
         Gamma gamma;
-        
-        
         
         /* ORIGINAL BORIS IMPLEMENTATION
         const float_X gamma_reci = float_X(1.0) / gamma(mom_minus, mass);
         const float3_X t = float_X(0.5) * QoM * bField * gamma_reci * deltaT;
-        auto s  = float_X(2.0) * t * (float_X(1.0) / (float_X(1.0) + pmacc::math::abs2(t)));
+        auto s  = float_X(2.0) * t * (float_X(1.0) / (float_X(1.0) + pmacc::math::abs2(t))); <--- Absolutquadrat
 
         const MomType mom_prime = mom_minus + pmacc::math::cross(mom_minus, t);
         const MomType mom_plus = mom_minus + pmacc::math::cross(mom_prime, s);
@@ -87,6 +84,23 @@ struct Push
         }
         */
 
+        const MomType mom_minus = mom + 0.5_X * charge * eField * deltaT;
+        
+        const float_X gamma_minus = sqrt( 1.0_X + (innerprod(( mom_minus / mass ), ( mom_minus / mass ))/(pow(c,2.))); //wie schreibt man das? vielleicht gamma((mom_minus/mass), ...)???
+        
+        const float3_X tau = 0.5_X * bField * charge * deltaT;
+        
+        const float_X sigma = pow(gamma_minus,2.) - innerprod(tau,tau); //das selbe wie mit gamma_minus nur in gruen
+        
+        const MomType u_star = innerprod( (mom_minus/mass) , tau * (1/.c)); //same again
+        
+        // müssen die alle const sein?
+        
+        const float_X gamma_plus = sqrt(( sigma + sqrt( pow(sigma,2.) + 4. * (innerprod(tau,tau)+ pow(u_star,2.))))/2.); //and once again: how the hell?
+        
+        const float3_X t_vector = (1./gamma_plus) * tau;
+        
+        
     }
 
     static pmacc::traits::StringProperty getStringProperties()
