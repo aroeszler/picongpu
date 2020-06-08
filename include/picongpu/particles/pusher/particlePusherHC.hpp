@@ -66,7 +66,7 @@ struct Push
         /* ORIGINAL BORIS IMPLEMENTATION
         const float_X gamma_reci = float_X(1.0) / gamma(mom_minus, mass);
         const float3_X t = float_X(0.5) * QoM * bField * gamma_reci * deltaT;
-        auto s  = float_X(2.0) * t * (float_X(1.0) / (float_X(1.0) + pmacc::math::abs2(t))); <--- Absolutquadrat
+        auto s  = float_X(2.0) * t * (float_X(1.0) / (float_X(1.0) + pmacc::math::abs2(t)));
 
         const MomType mom_prime = mom_minus + pmacc::math::cross(mom_minus, t);
         const MomType mom_plus = mom_minus + pmacc::math::cross(mom_prime, s);
@@ -83,23 +83,39 @@ struct Push
             pos[d] += (vel[d] * deltaT) / cellSize[d];
         }
         */
-
-        const MomType mom_minus = mom + 0.5_X * charge * eField * deltaT;
         
-        const float_X gamma_minus = sqrt( 1.0_X + (innerprod(( mom_minus / mass ), ( mom_minus / mass ))/(pow(c,2.))); //wie schreibt man das? vielleicht gamma((mom_minus/mass), ...)???
+        // gleich überall in mom umrechnen
+        //wie heißt das "alte" Momentum?
         
-        const float3_X tau = 0.5_X * bField * charge * deltaT;
+        const sqrt_HC::float_X gamma_i = math::sqrt( (sqrt_HC::float_X(1.0)) + pmacc::math::abs2(mom * ((sqrt_HC::float_X(1.0))/ SPEED_OF_LIGHT)))
         
-        const float_X sigma = pow(gamma_minus,2.) - innerprod(tau,tau); //das selbe wie mit gamma_minus nur in gruen
+        const sqrt_HC::float3_X x_first_half = pos[d] + mom * (deltaT/((sqrt_HC::float_X(2.0)) * gamma_i * mass))
         
-        const MomType u_star = innerprod( (mom_minus/mass) , tau * (1/.c)); //same again
+        const MomType mom_minus = mom + sqrt_HC::float_X(0.5) * charge * eField * deltaT;
         
+        const sqrt_HC::float_X gamma_minus = math::sqrt( (sqrt_HC::float_X(1.0)) + (pmacc::math::abs2(( mom_minus * (sqrt_HC::float_X(1.0)/mass) )/( SPEED_OF_LIGHT ));
+        
+        const sqrt_HC::float3_X tau = (sqrt_HC::float_X(0.5)) * bField * charge * deltaT;
+        
+        const sqrt_HC::float_X sigma = (gamma_minus * gamma_minus) - pmacc::math::abs2(tau); //das selbe wie mit gamma_minus nur in gruen
+        
+        const sqrt_HC::float3_X u_star = pmacc::math::dot( (mom_minus/mass) , tau * ((sqrt_HC::float_X(1.0))/c));
         // müssen die alle const sein?
         
-        const float_X gamma_plus = sqrt(( sigma + sqrt( pow(sigma,2.) + 4. * (innerprod(tau,tau)+ pow(u_star,2.))))/2.); //and once again: how the hell?
+        const sqrt_HC::float_X gamma_plus = math::sqrt(( sigma + math::sqrt( sigma * sigma + (sqrt_HC::float_X(4.0)) * (pmacc::math::abs2(tau) + pmacc::math::abs2(u_star))))/(sqrt_HC::float_X(2.0)));
         
-        const float3_X t_vector = (1./gamma_plus) * tau;
+        const sqrt_HC::float3_X t = ((sqrt_HC::float_X(1.0))/gamma_plus) * tau;
         
+        const sqrt_HC::float_X s = (sqrt_HC::float_X(1.0))/(sqrt_HC::float_X(1.0)) + pmacc::math::abs2(t));
+                                    
+         const MomType mom_plus = (s * (u_minus + t_vector * pmacc::math::dot( u_minus , t_vector )) + (pmacc::math::cross(u_minus,t_vector))) * mass;
+        
+         //u_vector_i = new_mom
+         new_mom
+         
+         gamma_final
+         x_i
+                     
         
     }
 
