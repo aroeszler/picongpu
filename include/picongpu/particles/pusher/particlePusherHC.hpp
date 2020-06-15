@@ -87,43 +87,45 @@ struct Push
         // gleich überall in mom umrechnen
         //wie heißt das "alte" Momentum?
         
-        const sqrt_HC::float_X gamma_i = math::sqrt( (sqrt_HC::float_X(1.0)) + pmacc::math::abs2(mom * ((sqrt_HC::float_X(1.0))/ SPEED_OF_LIGHT)))
+        const sqrt_HC::float_X gamma_i = gamma( mom , mass );
         
-        const sqrt_HC::float3_X x_first_half = pos[d] + mom * (deltaT/((sqrt_HC::float_X(2.0)) * gamma_i * mass))
+        const sqrt_HC::float3_X x_first_half = pos[d] + mom * (deltaT * sqrt_HC::float_X(0.5)/(gamma_i * mass));
         
         const MomType mom_minus = mom + sqrt_HC::float_X(0.5) * charge * eField * deltaT;
         
-        const sqrt_HC::float_X gamma_minus = math::sqrt( (sqrt_HC::float_X(1.0)) + (pmacc::math::abs2(( mom_minus * (sqrt_HC::float_X(1.0)/mass) )/( SPEED_OF_LIGHT ));
+        const sqrt_HC::float_X gamma_minus = gamma( mom_minus , mass );
         
         const sqrt_HC::float3_X tau = (sqrt_HC::float_X(0.5)) * bField * charge * deltaT;
         
-        const sqrt_HC::float_X sigma = (gamma_minus * gamma_minus) - pmacc::math::abs2(tau); //das selbe wie mit gamma_minus nur in gruen
+        const sqrt_HC::float_X sigma = pmacc::math::abs2(gamma_minus) - pmacc::math::abs(tau); //ist die abs2 Fkt sowohl für float_X als auch float3_X passend?
         
-        const sqrt_HC::float3_X u_star = pmacc::math::dot( (mom_minus/mass) , tau * ((sqrt_HC::float_X(1.0))/c));
+        const sqrt_HC::float3_X u_star = pmacc::math::dot( (mom_minus * sqrt_HC::float_X(1.0) / mass ) , tau * ((sqrt_HC::float_X(1.0)) / c ));
         // müssen die alle const sein?
         
-        const sqrt_HC::float_X gamma_plus = math::sqrt(( sigma + math::sqrt( sigma * sigma + (sqrt_HC::float_X(4.0)) * (pmacc::math::abs2(tau) + pmacc::math::abs2(u_star))))/(sqrt_HC::float_X(2.0)));
+        const sqrt_HC::float_X gamma_plus = math::sqrt(( sigma + math::sqrt( pmacc::math::abs2(sigma) + (sqrt_HC::float_X(4.0)) * (pmacc::math::abs2(tau) + pmacc::math::abs2(u_star))))* (sqrt_HC::float_X(0.5)));
         
         const sqrt_HC::float3_X t = ((sqrt_HC::float_X(1.0))/gamma_plus) * tau;
         
-        const sqrt_HC::float_X s = (sqrt_HC::float_X(1.0))/(sqrt_HC::float_X(1.0)) + pmacc::math::abs2(t));
+        const sqrt_HC::float_X s = (sqrt_HC::float_X(1.0))/(sqrt_HC::float_X(1.0) + pmacc::math::abs2(t));
                                     
-         const MomType mom_plus = (s * (u_minus + t_vector * pmacc::math::dot( u_minus , t_vector )) + (pmacc::math::cross(u_minus,t_vector))) * mass;
-        
-         //u_vector_i = new_mom
-         new_mom
+         const MomType mom_plus = (s * (mom_minus + t_vector * pmacc::math::dot( mom_minus , t_vector )) + (pmacc::math::cross(mom_minus ,t_vector))); //nochmal angucken, sollte man mom_minus/m nehmen und am ende *m nehmen? eher nicht
+                                                        
+         const MomType new_mom = mom_plus + eField * charge * deltaT * (sqrt_HC::float_X(0.5)) + pmacc::math::cross(mom_plus,t_vector);
+        //geht das so einfach?
          
-         gamma_final
-         x_i
+         const sqrt_HC::float_X gamma_final = gamma( new_mom, mass) //???
+                     
+         //position update
+         const sqrt_HC::float3_X x_i = x_first_half + new_mom * deltaT * ((sqrt_HC::float_X(0.5))/ (mass * gamma_final))
                      
         
     }
 
-    static pmacc::traits::StringProperty getStringProperties()
+    /*static pmacc::traits::StringProperty getStringProperties()
     {
         pmacc::traits::StringProperty propList( "name", "Boris" );
         return propList;
-    }
+    }*/
 };
 } // namespace particlePusherBoris
 } // namespace picongpu
