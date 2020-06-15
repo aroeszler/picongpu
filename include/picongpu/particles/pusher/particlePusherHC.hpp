@@ -87,9 +87,9 @@ struct Push
         // gleich überall in mom umrechnen
         //wie heißt das "alte" Momentum?
         
-        const sqrt_HC::float_X gamma_i = gamma( mom , mass );
+        //const sqrt_HC::float_X gamma_i = gamma( mom , mass ); //brauchen wir das überhaupt?
         
-        const sqrt_HC::float3_X x_first_half = pos[d] + mom * (deltaT * sqrt_HC::float_X(0.5)/(gamma_i * mass));
+        //const sqrt_HC::float3_X x_first_half = pos[d] + mom * (deltaT * sqrt_HC::float_X(0.5)/(gamma_i * mass));
         
         const MomType mom_minus = mom + sqrt_HC::float_X(0.5) * charge * eField * deltaT;
         
@@ -113,11 +113,21 @@ struct Push
          const MomType new_mom = mom_plus + eField * charge * deltaT * (sqrt_HC::float_X(0.5)) + pmacc::math::cross(mom_plus,t_vector);
         //geht das so einfach?
          
-         const sqrt_HC::float_X gamma_final = gamma( new_mom, mass) //???
+        const sqrt_HC::float_X gamma_final = gamma( new_mom, mass); //???
                      
          //position update
-         const sqrt_HC::float3_X x_i = x_first_half + new_mom * deltaT * ((sqrt_HC::float_X(0.5))/ (mass * gamma_final))
-                     
+         //const sqrt_HC::float3_X x_i = x_first_half + new_mom * deltaT * ((sqrt_HC::float_X(0.5))/ (mass * gamma_final))
+         particle[ momentum_ ] = new_mom;
+
+         Velocity velocity;
+        
+         const float3_X vel = velocity(new_mom, mass);
+
+         for(uint32_t d=0;d<simDim;++d)
+            {
+                pos[d] += (vel[d] * deltaT) / cellSize[d];
+            }
+        
         
     }
 
