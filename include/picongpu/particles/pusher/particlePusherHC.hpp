@@ -17,6 +17,13 @@
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
+/* used references:
+ *
+ * Introduction of the particle pusher: https://dx.doi.org/10.1063/1.4979989 or https://arxiv.org/abs/1701.05605 https://doi.org/10.3847/1538-4365/aab114
+ *
+ * Including little correction(s) by WarpX team: https://github.com/ECP-WarpX/WarpX/issues/320
+ */
+
 #pragma once
 
 #include "picongpu/simulation_defines.hpp"
@@ -47,8 +54,8 @@ struct Push
     )
     {
         float_X const weighting = particle[ weighting_ ];
-        float_X const mass = attribute::getMass( weighting, particle );
-        float_X const charge = attribute::getCharge( weighting, particle );
+        float_X const mass = attribute::getMass( weighting , particle );
+        float_X const charge = attribute::getCharge( weighting , particle );
 
         using MomType = momentum::type;
         MomType const mom = particle[ momentum_ ];
@@ -65,45 +72,33 @@ struct Push
 
         const sqrt_HC::float_X gamma_minus = gamma( mom_minus , mass );
         
-        const sqrt_HC::float3_X tau = precisionCast<sqrt_HC::float_X>(float_X(0.5) * bField * charge * deltaT);
+        const sqrt_HC::float3_X tau = precisionCast<sqrt_HC::float_X>( float_X(0.5) * bField * charge * deltaT );
 
-        const sqrt_HC::float_X sigma = pmacc::math::abs2(gamma_minus) - pmacc::math::abs2(tau);
+        const sqrt_HC::float_X sigma = pmacc::math::abs2( gamma_minus ) - pmacc::math::abs2( tau );
         
-        const sqrt_HC::float_X u_star = pmacc::math::dot(
-                             precisionCast<sqrt_HC::float_X>(mom_minus), tau
-                        ) / precisionCast<sqrt_HC::float_X>( mass * SPEED_OF_LIGHT );
+        const sqrt_HC::float_X u_star = pmacc::math::dot( precisionCast<sqrt_HC::float_X>( mom_minus ), tau ) / precisionCast<sqrt_HC::float_X>( mass * SPEED_OF_LIGHT );
        
-        const sqrt_HC::float_X gamma_plus = math::sqrt(( sigma + math::sqrt( pmacc::math::abs2(sigma) + (sqrt_HC::float_X(4.0)) * (pmacc::math::abs2(tau) + pmacc::math::abs2(u_star))))* (sqrt_HC::float_X(0.5)));
+        const sqrt_HC::float_X gamma_plus = math::sqrt( ( sigma + math::sqrt( pmacc::math::abs2( sigma ) + ( sqrt_HC::float_X(4.0) ) * ( pmacc::math::abs2( tau ) + pmacc::math::abs2( u_star ) ) ) ) * ( sqrt_HC::float_X(0.5) ) );
         
-        const sqrt_HC::float3_X t_vector = ((sqrt_HC::float_X(1.0))/gamma_plus) * tau;
+        const sqrt_HC::float3_X t_vector = ( ( sqrt_HC::float_X(1.0) ) / gamma_plus ) * tau;
         
-        const sqrt_HC::float_X s = (sqrt_HC::float_X(1.0))/(sqrt_HC::float_X(1.0) + pmacc::math::abs2(t_vector));
+        const sqrt_HC::float_X s = ( sqrt_HC::float_X(1.0) ) / ( sqrt_HC::float_X(1.0) + pmacc::math::abs2( t_vector ) );
                                     
-        const MomType mom_plus = precisionCast<float_X>(
-                  s * ( precisionCast<sqrt_HC::float_X>( mom_minus ) 
-                          + t_vector * pmacc::math::dot( 
-                              precisionCast<sqrt_HC::float_X>( mom_minus ) 
-                               , t_vector 
-                          )
-                      ) 
-                  + (pmacc::math::cross(
-                   precisionCast<sqrt_HC::float_X>( mom_minus ) , t_vector)));
+        const MomType mom_plus = precisionCast<float_X>( s * ( precisionCast<sqrt_HC::float_X>( mom_minus ) + t_vector * pmacc::math::dot( precisionCast<sqrt_HC::float_X>( mom_minus ) , t_vector ) ) + ( pmacc::math::cross( precisionCast<sqrt_HC::float_X>( mom_minus ) , t_vector)));
                                                         
-         const MomType new_mom = mom_plus + eField * charge * deltaT * float_X(0.5) + 
-                              pmacc::math::cross( mom_plus ,
-                                 precisionCast<float_X>(t_vector));
+        const MomType new_mom = mom_plus + eField * charge * deltaT * float_X(0.5) + pmacc::math::cross( mom_plus , precisionCast<float_X>( t_vector ) );
          
-        const sqrt_HC::float_X gamma_final = gamma( new_mom, mass);
+        const sqrt_HC::float_X gamma_final = gamma( new_mom , mass );
                      
         particle[ momentum_ ] = new_mom;
 
         Velocity velocity;
         
-        const float3_X vel = velocity(new_mom, mass);
+        const float3_X vel = velocity( new_mom , mass );
 
-        for(uint32_t d=0;d<simDim;++d)
+        for( uint32_t d=0 ; d<simDim ; ++d )
             {
-               pos[d] += (vel[d] * deltaT) / cellSize[d];
+               pos[d] += ( vel[d] * deltaT ) / cellSize[d];
             }
         
         
